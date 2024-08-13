@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using Pokedex.Data;
 using Pokedex.Dtos;
 using Pokedex.Models;
+using Pokedex.Services;
+using Pokedex.Services.IServices;
 
 namespace Pokedex.Controllers
 {
@@ -13,38 +15,26 @@ namespace Pokedex.Controllers
     {
         private readonly PokemonContext _context;
         private readonly IMapper _mapper;
-
-        public PokemonController(PokemonContext context, IMapper mapper)
+        private readonly IPokemonServices _service;
+        public PokemonController(PokemonContext context, IMapper mapper, IPokemonServices services)
         {
             _context = context; 
             _mapper = mapper;
+            _service = services;
         }
 
         [HttpGet]
-        public IActionResult RetornaPokemon()   
-        {
-            var pokemons = _context.Pokemons.ToList();
-
-            if (pokemons != null)
-            {
-                return Ok(pokemons);
-            }
-            
-            return BadRequest("Lista de pokemons não encontrada");
+        public IActionResult BuscarTodosPokemons()   
+        {   
+            var pokemons = _service.BuscarTodosPokemons();            
+            return Ok(pokemons);
         }
 
         [HttpGet("{id}")]
-        public IActionResult RetornaPokemonPorId(int id)
-        {
-            Pokemon pokemon = _context.Pokemons.FirstOrDefault(p => p.Id == id);
-
-            if (pokemon == null)
-            {
-                return NotFound("Este pokemon não existe na nossa pokedex!");
-            }
-                
-            LeituraPokemonDto leituraPokemonDto = _mapper.Map<LeituraPokemonDto>(pokemon);
-            return Ok(leituraPokemonDto);
+        public IActionResult BuscarPokemonPorId(int id)
+        {   
+            var result = _service.BuscarPokemonPorId(id);
+            return Ok(result);
         }
 
         [HttpPost]
@@ -65,7 +55,7 @@ namespace Pokedex.Controllers
                 _context.SaveChanges();
 
                 // Retorna a ação criada com a localização do novo recurso
-                return CreatedAtAction(nameof(RetornaPokemonPorId), new { id = pokemon.Id }, pokemon);
+                return CreatedAtAction(nameof(BuscarPokemonPorId), new { id = pokemon.Id }, pokemon);
             }
             catch (Exception ex)
             {
@@ -110,7 +100,7 @@ namespace Pokedex.Controllers
         [HttpDelete("{id}")]
         public IActionResult DeletaPokemon(int id)
         {
-            var pokemon = _context.Pokemons.FirstOrDefault(p => p.Id == id);
+            var pokemon =  _context.Pokemons.FirstOrDefault(p => p.Id == id);
             if (pokemon == null)
             {
                 return NotFound("Este pokemon não existe na nossa pokedex!");
@@ -119,6 +109,19 @@ namespace Pokedex.Controllers
             _context.Pokemons.Remove(pokemon);
             _context.SaveChanges();
             return Ok($"Pokemon {pokemon.NomePokemom} deletado com sucesso.");
+        }
+        [HttpDelete]
+        public IActionResult DeletarTodosPokemons()
+        {
+            var pokemons = _context.Pokemons.ToList();
+
+            if (pokemons.Count == 0)
+            {
+                return NotFound("Nenhum Pokémon encontrado para deletar.");
+            }
+            _context.Pokemons.RemoveRange(pokemons);
+            _context.SaveChanges();
+            return Ok("Todos os Pokémons foram deletados com sucesso.");
         }
     }
 }
