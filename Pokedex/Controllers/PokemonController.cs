@@ -38,12 +38,13 @@ namespace Pokedex.Controllers
         {
             Pokemon pokemon = _context.Pokemons.FirstOrDefault(p => p.Id == id);
 
-            if (pokemon != null)
+            if (pokemon == null)
             {
-                LeituraPokemonDto leituraPokemonDto = _mapper.Map<LeituraPokemonDto>(pokemon);
-                return Ok(leituraPokemonDto);
+                return NotFound("Este pokemon não existe na nossa pokedex!");
             }
-                return NotFound();
+                
+            LeituraPokemonDto leituraPokemonDto = _mapper.Map<LeituraPokemonDto>(pokemon);
+            return Ok(leituraPokemonDto);
         }
 
         [HttpPost]
@@ -54,18 +55,12 @@ namespace Pokedex.Controllers
                 return BadRequest("Os dados do Pokémon não foram fornecidos.");
             }
 
-            // Verifica se o Pokémon já existe com base no Id
-            var pokemonExiste = _context.Pokemons.Any(p => p.Id == criacaoPokemonDto.Id);
-
-            if (pokemonExiste)
-            {
-                return BadRequest("O Pokémon com este ID já existe.");
-            }
-
             try
             {
                 // Mapeia o DTO para o modelo de domínio
                 Pokemon pokemon = _mapper.Map<Pokemon>(criacaoPokemonDto);
+
+                // Adiciona o novo Pokémon ao contexto
                 _context.Pokemons.Add(pokemon);
                 _context.SaveChanges();
 
@@ -80,26 +75,37 @@ namespace Pokedex.Controllers
             }
         }
 
+
         [HttpPut("{id}")]
         public IActionResult AtualizaPokemon(int id, [FromBody] AtualizarPokemonDto atualizarPokemonDto)
-        {   
-            //Mapeia o atualizarPokemonDto para o Pokemon fazendo que salve nas entidades.
-            Pokemon pokemon = _mapper.Map<Pokemon>(atualizarPokemonDto);
+        {
+            // Encontra o Pokémon existente pelo ID
+            var pokemonExistente = _context.Pokemons.FirstOrDefault(p => p.Id == id);
 
-            pokemon = _context.Pokemons.FirstOrDefault(p => p.Id == id);
-            if (pokemon == null)
+            if (pokemonExistente == null)
             {
-                return NotFound();
+                return NotFound("Este pokemon não existe na nossa pokedex!"); // Retorna 404 se o Pokémon não for encontrado
             }
-            pokemon.NomePokemom = atualizarPokemonDto.NomePokemom;
-            pokemon.Altura = atualizarPokemonDto.Altura;
-            pokemon.Tipo = atualizarPokemonDto.Tipo;
-            pokemon.Peso = atualizarPokemonDto.Peso;
 
+            // Atualiza as propriedades do Pokémon existente com os valores do DTO
+            pokemonExistente.NomePokemom = atualizarPokemonDto.NomePokemom;
+            pokemonExistente.Altura = atualizarPokemonDto.Altura;
+            pokemonExistente.Tipo = atualizarPokemonDto.Tipo;
+            pokemonExistente.Peso = atualizarPokemonDto.Peso;
+
+            // Salva as alterações no banco de dados
             _context.SaveChanges();
 
-            return Ok(pokemon);
+            // Cria a resposta com o Pokémon atualizado e uma mensagem de sucesso
+            var resposta = new PokemonResponse
+            {
+                Mensagem = "Seu Pokémon foi alterado com sucesso!",
+                Pokemon = pokemonExistente
+            };
+
+            return Ok(resposta); // Retorna 200 OK com a resposta
         }
+
 
         [HttpDelete("{id}")]
         public IActionResult DeletaPokemon(int id)
@@ -107,12 +113,12 @@ namespace Pokedex.Controllers
             var pokemon = _context.Pokemons.FirstOrDefault(p => p.Id == id);
             if (pokemon == null)
             {
-                return NotFound();
+                return NotFound("Este pokemon não existe na nossa pokedex!");
             }
 
             _context.Pokemons.Remove(pokemon);
             _context.SaveChanges();
-            return Ok($"Pok�mon {pokemon.NomePokemom} deletado com sucesso.");
+            return Ok($"Pokemon {pokemon.NomePokemom} deletado com sucesso.");
         }
     }
 }
