@@ -1,51 +1,79 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using Pokedex.Dtos;
 using Pokedex.Models;
+using Pokedex.Repository.Interfaces;
 using Pokedex.Services.IServices;
-using System.Data;
 
 namespace Pokedex.Services
 {
     public class PokemonService : IPokemonServices
     {
-        private readonly IPokemonServices _repository;
-        public PokemonService(IPokemonServices repository)
+        private readonly IPokemonRepository _repository;
+        private readonly IMapper _mapper;
+        public PokemonService(IPokemonRepository repository, IMapper mapper)
         {
-           _repository = repository;
-        }
-        public  Task AdicionaPokemon(Pokemon pokemon)
-        {
-            return  _repository.AdicionaPokemon(pokemon);
+            _repository = repository;
+            _mapper = mapper;
         }
 
-        public Task AtualizaPokemon(Pokemon pokemon)
+        public async Task<IEnumerable<LeituraPokemonDto>> BuscarTodosPokemons()
         {
-            return _repository.AtualizaPokemon(pokemon);
+            var pokemons = await _repository.BuscarTodosPokemonsAsync();
+            return _mapper.Map<IEnumerable<LeituraPokemonDto>>(pokemons);
         }
-
-        public Task<Pokemon> BuscarPokemonPorId(int id)
+        public async Task<LeituraPokemonDto> BuscarPokemonPorId(int id)
         {
-            var retorno = _repository.BuscarPokemonPorId(id);
+            var pokemon = await _repository.BuscarPokemonPorIdAsync(id);
 
-            if (retorno == null)
+            if (pokemon == null)
             {
-                throw new Exception("Pokemon não encontrado.");
+                throw new Exception("Pokémon não encontrado.");
             }
-            return _repository.BuscarPokemonPorId(id);
+
+            return _mapper.Map<LeituraPokemonDto>(pokemon); 
         }
 
-        public Task<IEnumerable<Pokemon>> BuscarTodosPokemons()
-        {   
-            return _repository.BuscarTodosPokemons();
-        }
-
-        public Task DeletaPokemon(int id)
+        public async Task AdicionarPokemon(CriacaoPokemonDto dto)
         {
-            return _repository.DeletaPokemon(id);
+            //var pokemon = _mapper.Map<Pokemon>(dto);
+            var pokemon = new Pokemon
+            {
+                Altura = dto.Altura,
+                NomePokemom = dto.NomePokemom,
+                Peso = dto.Peso,
+                Tipo = dto.Tipo
+            };
+            await _repository.AdicionarPokemonAsync(pokemon);
+  
         }
 
-        public Task DeletarTodosPokemons()
+        public async Task AtualizarPokemon(int id,AtualizarPokemonDto dto)
         {
-            return _repository.DeletarTodosPokemons();
+            var pokemonExistente = await _repository.BuscarPokemonPorIdAsync(id);
+
+            if (pokemonExistente == null)
+            {
+                throw new Exception("Pokémon não encontrado para atualizar.");
+            };
+
+            _mapper.Map(dto, pokemonExistente);
+            _repository.AtualizarPokemonAsync(pokemonExistente);
+            await _repository.AtualizarPokemonAsync(pokemonExistente);
+        }
+        
+        public async Task DeletarPokemon(int id)
+        {
+            var pokemon = await _repository.BuscarPokemonPorIdAsync(id);
+            if (pokemon == null)
+            {
+                throw new Exception("Pokémon não encontrado para atualizar.");
+            };
+
+            await _repository.DeletarPokemonAsync(pokemon);
+        }
+        public async Task DeletarTodosPokemons()
+        {
+            await _repository.DeletarTodosPokemonsAsync();
         }
     }
 }

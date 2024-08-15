@@ -1,14 +1,15 @@
-﻿using Pokedex.Models;
+﻿using Pokedex.Dtos;
 
 namespace Pokedex.Services.IServices
 {
     public interface IPokemonServices
     {
-        Task<IEnumerable<Pokemon>> BuscarTodosPokemons();
-        Task<Pokemon> BuscarPokemonPorId(int id);
-        Task AdicionaPokemon(Pokemon pokemon);
-        Task AtualizaPokemon(Pokemon pokemon);
-        Task DeletaPokemon(int id);
+        Task<IEnumerable<LeituraPokemonDto>> BuscarTodosPokemons();
+        Task<LeituraPokemonDto> BuscarPokemonPorId(int id);
+        Task AdicionarPokemon(CriacaoPokemonDto dto);
+        Task AtualizarPokemon(int id, AtualizarPokemonDto dto);
+        Task DeletarPokemon(int id);
         Task DeletarTodosPokemons();
+
     }
 }

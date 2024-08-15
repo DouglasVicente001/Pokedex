@@ -1,57 +1,48 @@
-﻿using AutoMapper;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Pokedex.Data;
-using Pokedex.Dtos;
 using Pokedex.Models;
-using Pokedex.Repositorios.Interfaces;
+using Pokedex.Repository.Interfaces;
 
-namespace Pokedex.Repositorios
+namespace Pokedex.Repository
 {
-    public class PokemonRepositorio : IPokemonRepository
+    public class PokemonRepository : IPokemonRepository
     {
         private readonly PokemonContext _context;
-        private readonly IMapper _mapper;
-        public PokemonRepositorio(PokemonContext context, IMapper mapper)
+        public PokemonRepository(PokemonContext context)
         {
             _context = context;
-            _mapper = mapper;
         }
-        public async Task<IEnumerable<Pokemon>> BuscarTodosPokemons()
+        public async Task<IEnumerable<Pokemon>> BuscarTodosPokemonsAsync()
         {
             return await _context.Pokemons.ToListAsync();
         }
-        public async Task DeletarTodosPokemons()
+        public async Task<Pokemon> BuscarPokemonPorIdAsync(int id)
+        {
+            return await _context.Pokemons.FindAsync(id);
+        }
+
+        public async Task AdicionarPokemonAsync(Pokemon pokemon)
+        {   
+            await _context.Pokemons.AddAsync(pokemon);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task AtualizarPokemonAsync(Pokemon pokemon)
+        {
+            _context.Pokemons.Update(pokemon);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeletarPokemonAsync(Pokemon pokemon)
+        {
+            _context.Pokemons.Remove(pokemon);
+            await _context.SaveChangesAsync();
+        }
+        public async Task DeletarTodosPokemonsAsync()
         {
             var pokemons = await _context.Pokemons.ToListAsync();
             _context.Pokemons.RemoveRange(pokemons);
             await _context.SaveChangesAsync();
-        }
-        public async Task<Pokemon> BuscarPokemonPorId(int id)
-        {
-            Pokemon pokemon = _context.Pokemons.FirstOrDefault(p => p.Id == id);
-
-            LeituraPokemonDto leituraPokemonDto = _mapper.Map<LeituraPokemonDto>(pokemon);
-
-            return await _context.Pokemons.FindAsync(id);
-        }
-
-        public async Task AdicionaPokemon(Pokemon pokemon)
-        {
-            await _context.Pokemons.AddAsync(pokemon);
-        }
-
-        public async Task AtualizaPokemon(Pokemon pokemon)
-        {
-            _context.Pokemons.Update(pokemon);
-        }
-
-        public async Task DeletaPokemon(int id)
-        {
-            var pokemon = await _context.Pokemons.FindAsync(id);
-            if (pokemon != null)
-            {
-                _context.Pokemons.Remove(pokemon);
-            }
         }
     }
 }

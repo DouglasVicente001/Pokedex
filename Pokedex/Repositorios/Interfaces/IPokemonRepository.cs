@@ -1,16 +1,14 @@
 ﻿using Pokedex.Models;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
-namespace Pokedex.Repositorios.Interfaces
+namespace Pokedex.Repository.Interfaces
 {
     public interface IPokemonRepository
     {
-        Task<IEnumerable<Pokemon>> BuscarTodosPokemons();
-        Task<Pokemon> BuscarPokemonPorId(int id);
-        Task AdicionaPokemon(Pokemon pokemon);
-        Task AtualizaPokemon(Pokemon pokemon);
-        Task DeletaPokemon(int id);
-        Task  DeletarTodosPokemons();
+        Task<IEnumerable<Pokemon>> BuscarTodosPokemonsAsync();
+        Task<Pokemon> BuscarPokemonPorIdAsync(int id);
+        Task AdicionarPokemonAsync(Pokemon pokemon);
+        Task AtualizarPokemonAsync(Pokemon pokemon);
+        Task DeletarPokemonAsync(Pokemon pokemon);
+        Task DeletarTodosPokemonsAsync();
     }
 }

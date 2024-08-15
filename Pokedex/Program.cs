@@ -1,18 +1,25 @@
 using Microsoft.EntityFrameworkCore;
 using Pokedex.Data;
+using Pokedex.Repository;
+using Pokedex.Repository.Interfaces;
+using Pokedex.Services;
+using Pokedex.Services.IServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-builder.Services.AddDbContext<PokemonContext>(options =>
-    options.UseMySQL(builder.Configuration.GetConnectionString("PokemonConnection"))); // Remova a versão se o tipo MySqlServerVersion não for encontrado
 
+// Configura o contexto do banco de dados
+builder.Services.AddDbContext<PokemonContext>(options =>
+    options.UseMySQL(builder.Configuration.GetConnectionString("PokemonConnection")));
+
+// Registra o repositório e o serviço
+builder.Services.AddScoped<IPokemonRepository, PokemonRepository>();
+builder.Services.AddScoped<IPokemonServices, PokemonService>();
 
 var app = builder.Build();
 
@@ -24,9 +31,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
